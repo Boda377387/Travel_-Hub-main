@@ -1021,10 +1021,11 @@ packages:
   uni_links:
     dependency: "direct main"
     description:
-      name: uni_links
-      sha256: "051098acfc9e26a9fde03b487bef5d3d228ca8f67693480c6f33fd4fbb8e2b6e"
-      url: "https://pub.dev"
-    source: hosted
+      path: uni_links
+      ref: f9de4a02ff096090c96e71baac3fe1a73209e6c3
+      resolved-ref: f9de4a02ff096090c96e71baac3fe1a73209e6c3
+      url: "https://github.com/avioli/uni_links.git"
+    source: git
     version: "0.5.1"
   uni_links_platform_interface:
     dependency: transitive
