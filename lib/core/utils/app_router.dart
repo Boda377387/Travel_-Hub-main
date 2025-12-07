@@ -47,7 +47,7 @@ abstract class AppRouter {
       final user = FirebaseAuth.instance.currentUser;
       final loc = state.matchedLocation;
       final isAuthRoute = loc == kLoginView || loc == kRegisterView || loc == kforgetView || loc == kWelcomeView;
-      final isResetRoute = loc == kreset;
+      final isResetRoute = loc == kreset || loc.startsWith('/__/auth/action');
 
       if (loc == '/') return null;
 
@@ -60,11 +60,26 @@ abstract class AppRouter {
       }
     },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-      GoRoute(path: kWelcomeView, builder: (context, state) => const TravelWelcomeScreen()),
-      GoRoute(path: kLoginView, builder: (context, state) => const LoginScreen()),
-      GoRoute(path: kRegisterView, builder: (context, state) => const RegisterScreen()),
-      GoRoute(path: kforgetView, builder: (context, state) => const ForgotPasswordScreen()),
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: kWelcomeView,
+        builder: (context, state) => const TravelWelcomeScreen(),
+      ),
+      GoRoute(
+        path: kLoginView,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: kRegisterView,
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: kforgetView,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
       GoRoute(
         path: kreset,
         builder: (context, state) {
@@ -72,8 +87,34 @@ abstract class AppRouter {
           return ResetScreen(oobCode: oobCode);
         },
       ),
-      GoRoute(path: ksuccess, builder: (context, state) => const successScreen()),
-      GoRoute(path: kHomeView, builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: ksuccess,
+        builder: (context, state) => const successScreen(),
+      ),
+
+      GoRoute(
+        path: '/__/auth/action',
+        builder: (context, state) {
+          final uri = state.uri;
+          final mode = uri.queryParameters['mode'];
+          final oobCode = uri.queryParameters['oobCode'];
+
+          if (mode == 'resetPassword' && oobCode != null) {
+            return ResetScreen(oobCode: oobCode);
+          }
+
+          return const Scaffold(
+            body: Center(
+              child: Text('Invalid or unsupported link'),
+            ),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: kHomeView,
+        builder: (context, state) => const HomeScreen(),
+      ),
       GoRoute(
         path: kCameraView,
         builder: (context, state) {
@@ -81,8 +122,14 @@ abstract class AppRouter {
           return AiCamera(selectedImage: imageFile);
         },
       ),
-      GoRoute(path: kNavigationView, builder: (context, state) => const MainScreen()),
-      GoRoute(path: kMapView, builder: (context, state) => const FullMapScreen()),
+      GoRoute(
+        path: kNavigationView,
+        builder: (context, state) => const MainScreen(),
+      ),
+      GoRoute(
+        path: kMapView,
+        builder: (context, state) => const FullMapScreen(),
+      ),
       GoRoute(
         path: kHotelsView,
         builder: (context, state) => BlocProvider(
@@ -99,8 +146,13 @@ abstract class AppRouter {
             child: HotelsScreenDetails(hotels),
             transitionDuration: const Duration(milliseconds: 600),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero).chain(CurveTween(curve: Curves.easeInOut));
-              return SlideTransition(position: animation.drive(tween), child: child);
+              final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero).chain(
+                CurveTween(curve: Curves.easeInOut),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
             },
           );
         },
@@ -124,13 +176,21 @@ abstract class AppRouter {
             ),
             transitionDuration: const Duration(milliseconds: 600),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero).chain(CurveTween(curve: Curves.easeInOut));
-              return SlideTransition(position: animation.drive(tween), child: child);
+              final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero).chain(
+                CurveTween(curve: Curves.easeInOut),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
             },
           );
         },
       ),
-      GoRoute(path: kBookView, builder: (context, state) => const BookScreen()),
+      GoRoute(
+        path: kBookView,
+        builder: (context, state) => const BookScreen(),
+      ),
     ],
   );
 }
