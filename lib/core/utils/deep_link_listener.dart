@@ -45,7 +45,7 @@ class _DeepLinkListenerState extends State<DeepLinkListener> {
     final oobCode = uri.queryParameters['oobCode'];
 
     if (mode == 'resetPassword' && oobCode != null && mounted) {
-      GoRouter.of(context).push(
+      GoRouter.of(context).go(
         AppRouter.kreset,
         extra: oobCode,
       );

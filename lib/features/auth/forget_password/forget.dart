@@ -23,7 +23,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _resetPassword() async {
-    //GoRouter.of(context).go(AppRouter.kVerifyOtpView);
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
@@ -37,7 +36,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      _showMessage("Password reset link has been sent to your email");
+      GoRouter.of(context).go(AppRouter.ksuccess);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         _showMessage("This email doesn't exist");

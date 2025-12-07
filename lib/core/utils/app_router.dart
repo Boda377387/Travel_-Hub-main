@@ -1,14 +1,14 @@
-
 import 'dart:io';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:travel_hub/features/ai_camera/ai_camera.dart';
 import 'package:travel_hub/features/auth/forget_password/forget.dart';
+import 'package:travel_hub/features/auth/forget_password/success.dart';
 import 'package:travel_hub/features/auth/login/presentation/views/login_screen.dart';
 import 'package:travel_hub/features/auth/register/view/register_screen.dart';
-import 'package:travel_hub/features/auth/reset/reset_passworf.dart';
+import 'package:travel_hub/features/auth/reset/reset_password.dart';
 import 'package:travel_hub/features/welcome/welcome_screen.dart';
 import 'package:travel_hub/navigation/land_mark/data/carousel_slider_cubit/carousel_slider_cubit.dart';
 import 'package:travel_hub/navigation/land_mark/data/cubit/land_mark_cubit.dart';
@@ -25,80 +25,72 @@ import 'package:travel_hub/navigation/hotels/models/hotels_model.dart';
 import 'package:travel_hub/navigation/main_screen.dart';
 import 'package:travel_hub/navigation/maps/presentation/views/full_map_screen.dart';
 
-
 abstract class AppRouter {
   static const kWelcomeView = '/welcomeView';
   static const kLoginView = '/loginView';
   static const kRegisterView = '/registerView';
   static const kforgetView = '/forgetView';
   static const kreset = '/restView';
-
-  //Navigation Feature
+  static const ksuccess = '/success';
   static const kNavigationView = '/navigation';
   static const kMapView = '/mapView';
-  //Home Feature
   static const kHomeView = '/home';
   static const kCameraView = '/cameraView';
-
-  //Hotels Feature
   static const kHotelsView = '/hotels';
   static const kBookView = '/book';
-   static const kHotelsDetailsView = '/details';
-  //Land Mark Feature
+  static const kHotelsDetailsView = '/details';
   static const kLandMarkView = '/landMark';
   static const kLandMarkDetailsView = '/marksDetails';
 
-
   static final routers = GoRouter(
+    redirect: (context, state) {
+      final user = FirebaseAuth.instance.currentUser;
+      final loc = state.matchedLocation;
+      final isAuthRoute = loc == kLoginView || loc == kRegisterView || loc == kforgetView || loc == kWelcomeView;
+      final isResetRoute = loc == kreset;
+
+      if (loc == '/') return null;
+
+      if (user == null) {
+        if (isAuthRoute || isResetRoute) return null;
+        return kLoginView;
+      } else {
+        if (isAuthRoute) return kNavigationView;
+        return null;
+      }
+    },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-      GoRoute(path:kWelcomeView, builder: (context, state) => const TravelWelcomeScreen()),
-      GoRoute(
-        path: kLoginView,
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-      path: kRegisterView,
-       builder: (context, state) => const RegisterScreen(),
-       ),
-       GoRoute(
-        path: kforgetView,
-        builder: (context, state) => const ForgotPasswordScreen(),
-      ),
+      GoRoute(path: kWelcomeView, builder: (context, state) => const TravelWelcomeScreen()),
+      GoRoute(path: kLoginView, builder: (context, state) => const LoginScreen()),
+      GoRoute(path: kRegisterView, builder: (context, state) => const RegisterScreen()),
+      GoRoute(path: kforgetView, builder: (context, state) => const ForgotPasswordScreen()),
       GoRoute(
         path: kreset,
-        builder: (context, state) => const ResetScreen(oobCode: '',),
+        builder: (context, state) {
+          final oobCode = state.extra as String? ?? '';
+          return ResetScreen(oobCode: oobCode);
+        },
       ),
-       
-
-      //Home Feature
+      GoRoute(path: ksuccess, builder: (context, state) => const successScreen()),
       GoRoute(path: kHomeView, builder: (context, state) => const HomeScreen()),
-    GoRoute(
+      GoRoute(
         path: kCameraView,
         builder: (context, state) {
-          final imageFile = state.extra as File; 
+          final imageFile = state.extra as File;
           return AiCamera(selectedImage: imageFile);
         },
       ),
-      //Navigation Feature
+      GoRoute(path: kNavigationView, builder: (context, state) => const MainScreen()),
+      GoRoute(path: kMapView, builder: (context, state) => const FullMapScreen()),
       GoRoute(
-        path: kNavigationView,
-        builder: (context, state) => const MainScreen(),
-      ),
-
-      GoRoute(
-        path: kMapView,
-        builder: (context, state) => const FullMapScreen(),
-      ),
-
-   GoRoute(
         path: kHotelsView,
         builder: (context, state) => BlocProvider(
           create: (context) => HotelsCubit()..loadHotels(),
           child: const HotelsScreen(),
         ),
       ),
-            GoRoute(
+      GoRoute(
         path: kHotelsDetailsView,
         pageBuilder: (context, state) {
           final hotels = state.extra as Hotels;
@@ -106,20 +98,10 @@ abstract class AppRouter {
             key: state.pageKey,
             child: HotelsScreenDetails(hotels),
             transitionDuration: const Duration(milliseconds: 600),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(0.0, 1.0);
-                  const end = Offset.zero;
-                  final tween = Tween(
-                    begin: begin,
-                    end: end,
-                  ).chain(CurveTween(curve: Curves.easeInOut));
-
-                  return SlideTransition(
-                    position: animation.drive(tween),
-                    child: child,
-                  );
-                },
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero).chain(CurveTween(curve: Curves.easeInOut));
+              return SlideTransition(position: animation.drive(tween), child: child);
+            },
           );
         },
       ),
@@ -130,11 +112,10 @@ abstract class AppRouter {
           child: const LandMarkScreen(),
         ),
       ),
-       GoRoute(
+      GoRoute(
         path: kLandMarkDetailsView,
         pageBuilder: (context, state) {
           final landMark = state.extra as LandMark;
-
           return CustomTransitionPage(
             key: state.pageKey,
             child: BlocProvider(
@@ -142,24 +123,13 @@ abstract class AppRouter {
               child: LandMarkDetailsScreen(landMark),
             ),
             transitionDuration: const Duration(milliseconds: 600),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(0.0, 1.0);
-                  const end = Offset.zero;
-                  final tween = Tween(
-                    begin: begin,
-                    end: end,
-                  ).chain(CurveTween(curve: Curves.easeInOut));
-
-                  return SlideTransition(
-                    position: animation.drive(tween),
-                    child: child,
-                  );
-                },
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero).chain(CurveTween(curve: Curves.easeInOut));
+              return SlideTransition(position: animation.drive(tween), child: child);
+            },
           );
         },
       ),
-
       GoRoute(path: kBookView, builder: (context, state) => const BookScreen()),
     ],
   );
